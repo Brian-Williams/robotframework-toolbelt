@@ -6,7 +6,7 @@ to a travis script that could potentially hide real problems:
 - '[ "$(ls -A ./tests)" ] && pytest || echo "No tests in repo"'
 """
 import importlib
-from refactor_me import __title__
+from robottools import __title__
 
 
 def test_import():
