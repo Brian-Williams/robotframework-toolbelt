@@ -25,12 +25,18 @@ class resetname(SuiteVisitor):
                 test.parent.name = originallongname
                 test.parent.parent = None
 
-    def config_suites(self, suite):
+    def config_all_suites(self, suite):
         for suite in suite.suites:
             try:
                 self.config_test(suite)
             except KeyError:
                 self.config_suites(suite)
+
+    def config_suites(self, suite):
+        try:
+            self.config_test(suite)
+        except KeyError:
+            self.config_all_suites(suite)
 
     def start_suite(self, suite):
         self.config_suites(suite)
