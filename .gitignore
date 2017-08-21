@@ -91,3 +91,7 @@ ENV/
 
 # Spyder project settings
 .spyderproject
+
+# Test artifacts
+tests/*.xml
+tests/*.html
