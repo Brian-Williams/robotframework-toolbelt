@@ -1,7 +1,5 @@
 from robot.api import SuiteVisitor
 from robot.conf import gatherfailed
-from robot.model.testsuite import TestSuites
-from copy import copy
 
 
 class rename(SuiteVisitor):
@@ -17,9 +15,25 @@ class rename(SuiteVisitor):
 
 
 class resetname(SuiteVisitor):
-    def start_suite(self, suite):
+    def config_test(self, suite):
         originallongname = suite.metadata['originallongname']
-        suite.configure(name=originallongname)
+        try:
+            suite.configure(name=originallongname)
+        # Critically setting from non-root error
+        except TypeError:
+            for test in suite.tests:
+                test.parent.name = originallongname
+                test.parent.parent = None
+
+    def config_suites(self, suite):
+        for suite in suite.suites:
+            try:
+                self.config_test(suite)
+            except KeyError:
+                self.config_suites(suite)
+
+    def start_suite(self, suite):
+        self.config_suites(suite)
 
 
 class RenameThenGatherFailedTests(resetname):
