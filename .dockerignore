@@ -1,0 +1,5 @@
+.git
+.gitlab/
+*.md
+# README.md is read for long_description during install
+!README.md

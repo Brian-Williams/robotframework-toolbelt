@@ -1,0 +1,55 @@
+#!/usr/bin/env bash
+
+# TODO: Remove these when you refactor an old repo
+unalias ddebug &> /dev/null
+unalias dtest &> /dev/null
+
+# Find the repository directory if not provided
+my_repo_dir=$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )
+docker_name=$(basename "$(dirname "$(find . ! -path '*python*' -name "__init__.py")")")
+
+get_branch ()
+{
+    branch_name="$(git symbolic-ref HEAD 2>/dev/null)" ||
+    branch_name="(unnamed branch)"     # detached HEAD
+
+    branch_name=${branch_name##refs/heads/}
+    echo "$branch_name"
+}
+
+get_tag ()
+{
+    branch_name=$(get_branch)
+    # replace master with latest
+    if [ "$branch_name" == "master" ]; then
+        tag="latest"
+    else
+        tag="$branch_name"
+    fi
+    echo "$tag"
+}
+
+dbuild ()
+{ # This must be run from the root of the repo. Rebuild the docker image with the current branch as tag.
+    tag=$(get_tag)
+    docker build -t "$docker_name":"$tag" .
+}
+
+drun ()
+{
+    tag=$(get_tag)
+    docker run -ti --rm -v "$my_repo_dir":/repo "$docker_name":"${1:-$tag}" "${@:2}"
+}
+
+dtest ()
+{ # Run the basic set of tests inside the container. input is parameters to pass to run_tests.sh
+    tag=$(get_tag)
+    dbuild "$tag" > "$my_repo_dir"/.dbuild.out  # I don't want to see non-errors, but save to file for safety
+    docker run -ti --rm -v "$my_repo_dir":/repo "$docker_name":"$tag" bash /repo/run_tests.sh "$@"
+}
+
+ddebug ()
+{ # Get to an interactive terminal so that we can debug
+    tag=$(get_tag)
+    docker run -ti --rm -v "$my_repo_dir":/repo "$docker_name":"${1:-$tag}" "${2:-bash}" "${@:3}"
+}
