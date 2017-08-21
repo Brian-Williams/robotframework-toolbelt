@@ -21,13 +21,13 @@ with open(path.join(here, 'README.md'), encoding='utf-8') as f:
 
 
 # Get the version from the packages __init__.py
-with open('robotframework-toolbelt/__init__.py', 'r', encoding='utf-8') as fd:
+with open('robottools/__init__.py', 'r', encoding='utf-8') as fd:
     version = re.search(r'^__version__\s*=\s*[\'"]([^\'"]*)[\'"]',
                         fd.read(), re.MULTILINE).group(1)
 
 
 setup(
-    name='robotframework-toolbelt',
+    name='robottools',
 
     # Versions should comply with PEP440.  For a discussion on single-sourcing
     # the version across setup.py and the project code, see
@@ -38,7 +38,7 @@ setup(
     long_description=long_description,
 
     # The project's main homepage.
-    url='https://github.com/Brian-Williams/robotframework-toolbelt',
+    url='https://github.com/Brian-Williams/robottools',
 
     # Author details
     author='Brian Williams',
