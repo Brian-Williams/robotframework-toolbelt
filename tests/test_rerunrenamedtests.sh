@@ -12,3 +12,5 @@ rebot --prerebotmodifier robottools.resetname two_mod.xml
 rebot -o both one.xml two.xml
 rebot --prerebotmodifier robottools.resetname both.xml
 robot --prerunmodifier robottools.rerunrenamedtests:both.xml hello.robot
+
+robot --prerunmodifier robottools.rerunrenamedsuites:both.xml hello.robot
