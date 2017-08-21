@@ -11,3 +11,9 @@ class rename(SuiteVisitor):
         originallongname = suite.longname
         suite.metadata.setdefault('originallongname', originallongname)
         suite.configure(name=self.new_name)
+
+
+class resetname(SuiteVisitor):
+    def start_suite(self, suite):
+        originallongname = suite.metadata['originallongname']
+        suite.configure(name=originallongname)
