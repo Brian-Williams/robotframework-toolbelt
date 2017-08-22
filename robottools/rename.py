@@ -17,13 +17,8 @@ class rename(SuiteVisitor):
 class resetname(SuiteVisitor):
     def config_test(self, suite):
         originallongname = suite.metadata['originallongname']
-        try:
-            suite.configure(name=originallongname)
-        # Critically setting from non-root error
-        except TypeError:
-            for test in suite.tests:
-                test.parent.name = originallongname
-                test.parent.parent = None
+        suite.name = originallongname
+        suite.parent = None
 
     def config_all_suites(self, suite):
         for suite in suite.suites:
@@ -60,10 +55,34 @@ class rerunrenamedtests(SuiteVisitor):
 
 # won't work because of critically from root bug
 class RenameThenGatherFailedSuites(resetname, gatherfailed.GatherFailedSuites):
-    pass
+    def start_suite(self, suite):
+        for test in suite.tests:
+            print("test {} {}".format(test, not test.passed))
+
+        if any(not test.passed for test in suite.tests):
+            print("goteeeem, {}".format(suite.longname))
+            print("suites before append {}".format(self.suites))
+            self.suites.append(suite.longname)
+            print("suites after append {}".format(self.suites))
+
+        super(RenameThenGatherFailedSuites, self).start_suite(suite)
 
 
 gatherfailed.GatherFailedSuites = RenameThenGatherFailedSuites
+
+
+def gather_failed_suites(output):
+    if output.upper() == 'NONE':
+        return []
+    gatherer = RenameThenGatherFailedSuites()
+
+    from robot.result import ExecutionResult
+    ExecutionResult(output, include_keywords=False).suite.visit(gatherer)
+    if not gatherer.suites:
+        print('All suites passed. {}'.format(gatherer.suites))
+
+    print("return {}".format(gatherer.suites))
+    return gatherer.suites
 
 
 class rerunrenamedsuites(SuiteVisitor):
@@ -71,5 +90,10 @@ class rerunrenamedsuites(SuiteVisitor):
         self.output = output
 
     def start_suite(self, suite):
-        suites = gatherfailed.gather_failed_suites(self.output)
+        print("running for {}".format(suite))
+        print("Beofre {}...{}".format(suite.tests, suite.suites))
+
+        suites = gather_failed_suites(self.output)
+        print("suites {}".format(suites))
         suite.filter(included_suites=suites)
+        print("After {}".format(suite.tests))
