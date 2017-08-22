@@ -8,12 +8,17 @@ from robot.utils import get_error_message
 class rename(SuiteVisitor):
     """Store the original longname so that rerunning can happen even with virtually reorganized tests."""
 
-    def __init__(self, new_name):
+    def __init__(self, new_name=None):
         self.new_name = new_name
 
     def start_suite(self, suite):
         originallongname = suite.longname
         suite.metadata.setdefault('originallongname', originallongname)
+        if not self.new_name:
+            try:
+                self.new_name = suite.metadata['rename']
+            except KeyError:
+                raise RuntimeError("No name input or 'rename' metadata. Can't rename suite.")
         suite.configure(name=self.new_name)
 
 
