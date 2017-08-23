@@ -12,14 +12,10 @@ class rename(SuiteVisitor):
         self.new_name = new_name
 
     def start_suite(self, suite):
-        originallongname = suite.longname
-        suite.metadata.setdefault('originallongname', originallongname)
-        if not self.new_name:
-            try:
-                self.new_name = suite.metadata['rename']
-            except KeyError:
-                raise RuntimeError("No name input or 'rename' metadata. Can't rename suite.")
-        suite.configure(name=self.new_name)
+        if suite.id == 's1':
+            originallongname = suite.longname
+            suite.metadata.setdefault('originallongname', originallongname)
+            suite.configure(name=self.new_name)
 
 
 class resetname(SuiteVisitor):
