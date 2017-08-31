@@ -19,6 +19,7 @@ class rename(SuiteVisitor):
 
 
 class resetname(SuiteVisitor):
+    """Get the original longname from metadata and apply as the name."""
     def config_test(self, suite):
         originallongname = suite.metadata['originallongname']
         suite.name = originallongname
