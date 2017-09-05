@@ -1,7 +1,8 @@
 from robot.api import SuiteVisitor
 from robot.conf import gatherfailed
-from robot.result import ExecutionResult
 from robot.errors import DataError
+from robot.parsing.model import _TestData
+from robot.result import ExecutionResult
 from robot.utils import get_error_message
 
 
@@ -22,6 +23,7 @@ class resetname(SuiteVisitor):
     """Get the original longname from metadata and apply as the name."""
     def config_test(self, suite):
         originallongname = suite.metadata['originallongname']
+
         suite.name = originallongname
         suite.parent = None
 
@@ -86,3 +88,21 @@ class rerunrenamedsuites(SuiteVisitor):
     def start_suite(self, suite):
         suites = gather_failed_suites(self.output)
         suite.filter(included_suites=suites)
+
+
+class TestDataNameHelper(_TestData):
+    """Remove the blocker of not having *_table's defined, so that we can get name the same way as TestData"""
+    def _get_tables(self, *args, **kwargs):
+        # robot.utils NormalizedDict accepts None as a valid input
+        return None
+
+
+class defaultname(SuiteVisitor):
+    """Set name based on the source regardless of name changes.
+
+    Is the complement of name (-N, --name). Sets what would've been selected as the default name if name hadn't been
+    used. Useful so external log data of original name isn't needed.
+    """
+    def start_suite(self, suite):
+        if suite.source:
+            suite.name = TestDataNameHelper(source=suite.source).name
