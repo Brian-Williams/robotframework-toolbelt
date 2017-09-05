@@ -95,6 +95,7 @@ setup(
     # $ pip install -e .[test]
     extras_require={
         'test': ['flake8', 'pytest>=2.9.0'],
+        'testlink': ['testlink']
     },
 
     # If there are data files included in your packages that need to be
