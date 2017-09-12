@@ -1,5 +1,5 @@
 import importlib
-from refactor_me import __title__
+from robottools import __title__
 
 
 globals()[__title__] = importlib.import_module(__title__)
