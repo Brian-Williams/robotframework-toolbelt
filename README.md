@@ -12,6 +12,6 @@ Runs resetname and then gathers failed tests to be run.
 ## rerunrenamedsuties
 Runs resetname and then gathers failed suites to be run.
 
-## defaultname
+## unname
 Sets the name of a named (-N or --name) or renamed (prerunmodifier rename:) suite back to
 it's original name as if it was set as default without either input.

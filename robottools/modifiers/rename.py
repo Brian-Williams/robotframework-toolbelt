@@ -97,11 +97,13 @@ class TestDataNameHelper(_TestData):
         return None
 
 
-class defaultname(SuiteVisitor):
-    """Set name based on the source regardless of name changes.
+class unname(SuiteVisitor):
+    """Change the suite names to be what they would've been had no names been changed.
+
+    Set name based on the source regardless of name changes.
 
     Is the complement of name (-N, --name). Sets what would've been selected as the default name if name hadn't been
-    used. Useful so external log data of original name isn't needed.
+    used. Useful so external saving of original name isn't needed.
     """
     def start_suite(self, suite):
         if suite.source:
