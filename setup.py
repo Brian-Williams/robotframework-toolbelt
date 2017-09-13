@@ -87,7 +87,7 @@ setup(
     # your project is installed. For an analysis of "install_requires" vs pip's
     # requirements files see:
     # https://packaging.python.org/en/latest/requirements.html
-    install_requires=['robotframework>=3.0.2'],
+    install_requires=['robotframework>=3.0.2', 'testlink'],
 
     # List additional groups of dependencies here (e.g. development
     # dependencies). You can install these using the following syntax,
@@ -95,7 +95,6 @@ setup(
     # $ pip install -e .[test]
     extras_require={
         'test': ['flake8', 'pytest>=2.9.0'],
-        'testlink': ['testlink']
     },
 
     # If there are data files included in your packages that need to be
