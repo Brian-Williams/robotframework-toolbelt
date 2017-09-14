@@ -46,10 +46,6 @@ class reporttestlink(object):
 
         self._tlh = self._platformname = None
 
-        # TODO: remove
-        import ssl
-        ssl._create_default_https_context = ssl._create_unverified_context
-
     @property
     def platformname(self):
         if not self._platformname:
