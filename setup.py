@@ -87,7 +87,7 @@ setup(
     # your project is installed. For an analysis of "install_requires" vs pip's
     # requirements files see:
     # https://packaging.python.org/en/latest/requirements.html
-    install_requires=['robotframework>=3.0.2', 'testlink'],
+    install_requires=['robotframework>=3.0.2', 'TestLink-API-Python-client'],
 
     # List additional groups of dependencies here (e.g. development
     # dependencies). You can install these using the following syntax,
@@ -111,7 +111,7 @@ setup(
     data_files=[],
 
     # To provide executable scripts, use entry points in preference to the
-    # "scripts" keyword. Entry points provide cross-platform support and allow
-    # pip to create the appropriate form of executable for the target platform.
+    # "scripts" keyword. Entry points provide cross-platformname support and allow
+    # pip to create the appropriate form of executable for the target platformname.
     entry_points={},
 )
