@@ -50,8 +50,6 @@ class reporttestlink(object):
                 raise RuntimeError("Report kwarg was passed in with multiple equal signs. '{}'".format(kwarg))
             self.report_kwargs[arg] = value
 
-        self.report_kwargs.setdefault('guess', True)
-
         self._tlh = self._platformname = None
 
     @property
@@ -85,6 +83,9 @@ class reporttestlink(object):
         testcases = self._get_testcases(test)
         self.report_kwargs['status'] = self._get_testlink_status(test)
         self._get_params_from_variables()
+
+        # This is supposed to default to true by the API spec, but doesn't on some testlink versions
+        self.report_kwargs.setdefault('guess', True)
 
         for testcase in testcases:
             resp = self.tlh.reportTCResult(testcaseexternalid=testcase, **self.report_kwargs)
