@@ -14,7 +14,7 @@ report_params = {str(param): 'testlink' + str(param) for param in reportTCResult
 class reporttestlink(object):
     ROBOT_LISTENER_API_VERSION = 3
 
-    def __init__(self, test_prefix, api_key, server, *report_kwargs):
+    def __init__(self, test_prefix, dev_key, server, *report_kwargs):
         """
         This is specifically for looking at testcaseexternalids in testcase documentation and sending results to all
         testcases found.
@@ -23,17 +23,20 @@ class reporttestlink(object):
         parameter and it will select and add if it wasn't passed in at __init__.
         For example if you wanted to pass in the platformname you would set testlinkplatformname. This is to avoid
         robot name collisions with incredibly common variable names like user and timestamp.
+        Note: dev_key is set during testlink connection and used as a default by the testlink library.
+              So, if `testlinkdevkey` is passed in it will effectively take priority as the second positional arg
+              dev_key is *not* put into report_kwargs. This is by design.
 
         Since kwargs are not supported in listeners you must pass in args with an equal sign between the key and the
         value (<argument>=<value).
 
         :param test_prefix: The letters preceding testlink numbers. ex. abc-1234 the test_prefix would be 'abc'
-        :param api_key: API key of the user running the tests
+        :param dev_key: API key of the user running the tests
         :param server: The testlink server
         :param report_kwargs: These are args in the format `<argument>=<value>`.
         """
         self.test_prefix = test_prefix
-        self.api_key = api_key
+        self.dev_key = dev_key
         self.testlink_server = server
 
         # Listeners don't support real kwargs
@@ -58,7 +61,7 @@ class reporttestlink(object):
         return self._tlh
 
     def connect_testlink(self):
-        self._tlh = TestLinkHelper(self.testlink_server, self.api_key).connect(TestlinkAPIGeneric)
+        self._tlh = TestLinkHelper(self.testlink_server, self.dev_key).connect(TestlinkAPIGeneric)
 
     def _get_params_from_variables(self):
         for testlink_param, robot_variable in report_params.items():
