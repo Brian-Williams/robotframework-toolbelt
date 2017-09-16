@@ -4,6 +4,12 @@ from robot.libraries.BuiltIn import BuiltIn
 from robot.api import logger as robot_logger
 
 
+reportTCResultParams = [
+    'testcaseid', 'testplanid', 'buildname', 'status', 'notes', 'testcaseexternalid', 'buildid', 'platformid',
+    'platformname', 'guess', 'bugid', 'custumfields', 'overwrite', 'user', 'execduration', 'timestamp', 'steps',
+    'devKey']
+report_params = {str(param): 'testlink' + str(param) for param in reportTCResultParams}
+
 
 class reporttestlink(object):
     ROBOT_LISTENER_API_VERSION = 3
@@ -13,8 +19,10 @@ class reporttestlink(object):
         This is specifically for looking at testcaseexternalids in testcase documentation and sending results to all
         testcases found.
 
-        If platformname is not passed in to the listener it will search the test for ${testlinkplatform} for the
-        platformname.
+        If you would like to set a default input from the test itself you can add 'testlink' to the beginning of the
+        parameter and it will select and add if it wasn't passed in at __init__.
+        For example if you wanted to pass in the platformname you would set testlinkplatformname. This is to avoid
+        robot name collisions with incredibly common variable names like user and timestamp.
 
         Since kwargs are not supported in listeners you must pass in args with an equal sign between the key and the
         value (<argument>=<value).
@@ -23,9 +31,6 @@ class reporttestlink(object):
         :param api_key: API key of the user running the tests
         :param server: The testlink server
         :param report_kwargs: These are args in the format `<argument>=<value>`.
-        :param nonposkwargs: py2 support for py3 style non positional kwargs
-            Internal values:
-                - guess=True
         """
         self.test_prefix = test_prefix
         self.api_key = api_key
@@ -47,12 +52,6 @@ class reporttestlink(object):
         self._tlh = self._platformname = None
 
     @property
-    def platformname(self):
-        if not self._platformname:
-            self._get_platform_from_variable()
-        return self._platformname
-
-    @property
     def tlh(self):
         if not self._tlh:
             self.connect_testlink()
@@ -61,8 +60,13 @@ class reporttestlink(object):
     def connect_testlink(self):
         self._tlh = TestLinkHelper(self.testlink_server, self.api_key).connect(TestlinkAPIGeneric)
 
-    def _get_platform_from_variable(self):
-        self._platformname = BuiltIn().get_variable_value("${testlinkplatform}")
+    def _get_params_from_variables(self):
+        for testlink_param, robot_variable in report_params.items():
+            # setdefault but only if real non-None value from test
+            if testlink_param not in self.report_kwargs:
+                tc_report_val = BuiltIn().get_variable_value("${" + str(robot_variable) + "}")
+                if tc_report_val is not None:
+                    self.report_kwargs[testlink_param] = tc_report_val
 
     def _get_testlink_status(self, test):
         # testlink accepts p/f for passed and failed
@@ -71,10 +75,13 @@ class reporttestlink(object):
             status = 'p'
         return status
 
+    def _get_testcases(self, test):
+        return DocTestParser(self.test_prefix).get_testcases(test)
+
     def end_test(self, data, test):
-        testcases = DocTestParser(self.test_prefix).get_testcases(test)
+        testcases = self._get_testcases(test)
         self.report_kwargs['status'] = self._get_testlink_status(test)
-        self.report_kwargs.setdefault('platformname', self.platformname)
+        self._get_params_from_variables()
 
         for testcase in testcases:
             resp = self.tlh.reportTCResult(testcaseexternalid=testcase, **self.report_kwargs)
