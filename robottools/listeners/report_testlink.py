@@ -50,7 +50,7 @@ class reporttestlink(object):
                 raise RuntimeError("Report kwarg was passed in with multiple equal signs. '{}'".format(kwarg))
             self.report_kwargs[arg] = value
 
-        self._tlh = self._platformname = None
+        self._tlh = self._testcases = None
 
     @property
     def tlh(self):
@@ -76,17 +76,100 @@ class reporttestlink(object):
             status = 'p'
         return status
 
+    @property
+    def testcases(self):
+        if not self._testcases:
+            self._testcases = self._get_testcases()
+        return self._testcases
+
     def _get_testcases(self, test):
         return DocTestParser(self.test_prefix).get_testcases(test)
 
     def end_test(self, data, test):
-        testcases = self._get_testcases(test)
         self.report_kwargs['status'] = self._get_testlink_status(test)
         self._get_params_from_variables()
 
         # This is supposed to default to true by the API spec, but doesn't on some testlink versions
         self.report_kwargs.setdefault('guess', True)
 
-        for testcase in testcases:
+        for testcase in self.testcases:
             resp = self.tlh.reportTCResult(testcaseexternalid=testcase, **self.report_kwargs)
             robot_logger.info(resp, also_console=True)
+
+
+class generatetestlink(reporttestlink):
+    """This will generate a needed planid, or platform if required. And will copy the testcase into it."""
+    def __init__(self, *args, **kwargs):
+        super(generatetestlink, self).__init__(*args, **kwargs)
+        self.gen_opts = ['testprojectid', 'testplanid', 'platformname']
+        self._testplanname = self._testprojectid = self._testplanid = self._plan_testcases = None
+
+    def generate(self):
+        for gen_opt in self.gen_opts:
+            value = getattr(self, gen_opt)
+            if value and not getattr(self.report_kwargs, gen_opt):
+                setattr(self.report_kwargs, gen_opt, value)
+
+    @property
+    def testprojectname(self):
+        return self.report_kwargs.get('testprojectname')
+
+    @property
+    def testprojectid(self):
+        if self._testprojectid:
+            return self._testprojectid
+
+        tpn_kwarg = self.report_kwargs.get('testprojectid')
+        if tpn_kwarg:
+            self._testprojectid = tpn_kwarg
+        else:
+            try:
+                self._testprojectid = self.tlh.getTestProjectByName(self.testprojectname)['id']
+            except TypeError:
+                # TODO: Generate testprojectid
+                self._testprojectid = None
+
+        return self._testprojectid
+
+    @property
+    def testplanid(self):
+        """This won't necessarily be able to create a testplanid. It requires a planname and projectname."""
+        if not self._testplanid:
+            try:
+                self._testplanid = self.tlh.getTestPlanByName(self.testprojectname, self.testplanname)[0]['id']
+            except TypeError:
+                self._testplanid = self.generate_testplanid()
+        return self._testplanid
+
+    def generate_testplanid(self):
+        if all(arg in self.report_kwargs for arg in ['testplanname', 'testprojectname']):
+            tp = self.tlh.createTestPlan(self.report_kwargs['testplanname'], self.report_kwargs['testprojectname'])
+            self.report_kwargs['testplanid'] = tp[0]['id']
+            return self.report_kwargs['testplanid']
+
+    @property
+    def platformname(self):
+        """Return a platformname added to the testplan if there is one."""
+        pn_kwarg = self.report_kwargs.get('platformname')
+        if pn_kwarg:
+            self.generate_platformname(pn_kwarg)
+        return pn_kwarg
+
+    def generate_platformname(self, platformname):
+        if platformname not in self.tlh.getTestPlanPlatforms(self.testplanid):
+            self.tlh.addPlatformToTestPlan(self.testplanid, platformname)
+
+    @property
+    def plan_testcases(self):
+        if not self._plan_testcases:
+            self._plan_testcases = set()
+            tc_dict = self.tlh.getTestCasesForTestPlan(self.testplanid)
+            for _, platform in tc_dict.items():
+                for k, v in platform.items():
+                    self._plan_testcases.add(v['full_external_id'])
+        return self._plan_testcases
+
+    def ensure_testcases_added(self):
+        for testcase in self.testcases:
+            if testcase not in self.plan_testcases:
+                self.tlh.addTestCaseToTestPlan(self.testprojectid, self.testplanid, testcase)
