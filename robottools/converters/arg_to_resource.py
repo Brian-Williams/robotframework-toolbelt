@@ -54,12 +54,14 @@ PATHABLE_OPTS = ['Variables']
 VARIABLE_TAB = ['var']
 SETTING_TAB = [opt for opt in RESOURCE_OPS if opt not in VARIABLE_TAB]
 
+EXTENSION = '.resource'
+
 
 class ArgToResource(object):
     def __init__(self, argfile, execdir=os.getcwd()):
         self.argfile = argfile
         self.execdir = execdir
-        self._relative = self._tabs = self._raw_options = None
+        self._tabs = self._raw_options = None
 
     def create_resourcefile(self):
         with open(self.resourcefile, 'w+') as f:
@@ -73,19 +75,18 @@ class ArgToResource(object):
     def _get_tab_contents(self, tab, roptions):
         if tab == '*** Variables ***':
             for ropt in roptions:
+                print(ropt)
                 s_ropt = ropt.value.split(':')
                 var_name = s_ropt[0]
                 var_value = ':'.join(s_ropt[1:])
                 yield "${" + var_name + "}=  " + var_value + '\n'
-        if tab in '*** Settings ***':
+        if tab == '*** Settings ***':
             for ropt in roptions:
                 yield ropt.opt + '  ' + ropt.value + '\n'
 
     @property
     def relative_path(self):
-        if self._relative is None:
-            self._get_relative_path()
-        return self._relative
+        return '${EXECDIR}/'
 
     @property
     def tabs(self):
@@ -96,7 +97,7 @@ class ArgToResource(object):
     @property
     def resourcefilename(self):
         no_ext_path = os.path.splitext(self.argfile)[0]
-        return os.path.basename(no_ext_path) + '.resource'
+        return os.path.basename(no_ext_path) + EXTENSION
 
     @property
     def resourcefilepath(self):
@@ -112,11 +113,6 @@ class ArgToResource(object):
             self._get_raw_options_from_argfile()
         return self._raw_options
 
-    def _get_relative_path(self):
-        path = os.path.abspath(self.argfile)
-        relative = path.replace(self.execdir, '${EXECDIR}${/}')
-        self._relative = relative
-
     def _populate_tabs(self):
         self._tabs = self._sort_options()
 
@@ -129,7 +125,8 @@ class ArgToResource(object):
                 # This assumes one argument per line
                 value = ' '.join(opts[i + 1:]).strip()
                 if RESOURCE_ARGS[opt] in PATHABLE_OPTS:
-                    value = self.relative_path + value
+                    if not value.startswith('/'):
+                        value = self.relative_path + value
                 yield robot_opt(RESOURCE_ARGS[opt], value)
 
     def _get_raw_options_from_argfile(self):
