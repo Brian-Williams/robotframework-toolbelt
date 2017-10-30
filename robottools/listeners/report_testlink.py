@@ -1,7 +1,7 @@
 from .docstring import DocTestParser
 from testlink import TestLinkHelper, TestlinkAPIGeneric
-from testlink.testlinkerrors import TLResponseError
 from robot.libraries.BuiltIn import BuiltIn
+from testlink.testlinkerrors import TLResponseError
 from robot.api import logger as robot_logger
 
 
@@ -65,11 +65,11 @@ class reporttestlink(object):
     @property
     def tlh(self):
         if not self._tlh:
-            self.connect_testlink()
+            self._tlh = self.connect_testlink()
         return self._tlh
 
     def connect_testlink(self):
-        self._tlh = TestLinkHelper(self.testlink_server, self.dev_key).connect(TestlinkAPIGeneric)
+        return TestLinkHelper(self.testlink_server, self.dev_key).connect(TestlinkAPIGeneric)
 
     @property
     def testcases(self):
